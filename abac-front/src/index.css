@@ -4,8 +4,8 @@
   font-weight: 400;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color: black; 
+  background-color: white;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -25,9 +25,12 @@ a:hover {
 body {
   margin: 0;
   display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+  justify-content: center;
+  align-items: center;
+  width: 100vw; /* Full width */
+  height: 100vh; /* Full height */
+  color: black; /* Set text color to black */
+  font-size: 2rem; /* Increased font size */
 }
 
 h1 {
