@@ -9,8 +9,8 @@ import SettingsIcon from '@mui/icons-material/Settings'; // Importing SettingsIc
 interface Team {
   team_id: number;
   team_name: string;
-  team_description?: string;
-  owner: number;
+  team_description?: string; // Add this if it exists
+  owner: number; // Add owner field to check ownership
 }
 
 interface DecodedToken {
@@ -18,28 +18,28 @@ interface DecodedToken {
 }
 
 const MiroStyleTeamPage = () => {
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
-  const [isAddingTeam, setIsAddingTeam] = useState(false);
-  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [teams, setTeams] = useState<Team[]>([]); // State for storing fetched teams
+  const [isModalOpen, setIsModalOpen] = useState(false); // State for managing modal visibility
+  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null); // For viewing/editing team details
+  const [isAddingTeam, setIsAddingTeam] = useState(false); // Manage whether to show the create form
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null); // Store current user's ID
 
   // Fetch teams and the current user's ID on component mount
   useEffect(() => {
     async function fetchTeams() {
       try {
-        const token = localStorage.getItem('token'); 
+        const token = localStorage.getItem('token'); // Get token from localStorage
         if (!token) {
           console.error('No token found. Redirect to login.');
-          return; 
+          return; // Handle no token case
         }
 
-        const decoded: DecodedToken = jwtDecode(token);
+        const decoded: DecodedToken = jwtDecode(token); // Decode the token to get the userId
         const userId = decoded.userId;
-        setCurrentUserId(userId); 
+        setCurrentUserId(userId); // Set the current user ID
 
-        const fetchedTeams = await getTeamsByUserId(userId); 
-        setTeams(fetchedTeams.teams || []); 
+        const fetchedTeams = await getTeamsByUserId(userId); // Fetch teams using user ID
+        setTeams(fetchedTeams.teams || []); // Set the fetched teams in the state
       } catch (error) {
         console.error('Failed to fetch teams', error);
       }
@@ -50,28 +50,31 @@ const MiroStyleTeamPage = () => {
 
   // Handle opening the modal for adding a new team
   const openAddTeamModal = () => {
-    setSelectedTeam(null);
-    setIsAddingTeam(true);
-    setIsModalOpen(true); 
+    setSelectedTeam(null); // Clear selected team for the add team modal
+    setIsAddingTeam(true); // Switch to create team mode
+    setIsModalOpen(true); // Open the modal
   };
 
   // Handle editing the details of a team
   const handleEditTeam = (team: Team) => {
-    setSelectedTeam(team);
-    setIsAddingTeam(false);
-    setIsModalOpen(true);
+    setSelectedTeam(team); // Set selected team for editing
+    setIsAddingTeam(false); // Switch to edit mode
+    setIsModalOpen(true); // Open the modal
   };
 
   // Handle submission of new or updated team
   const handleAddOrUpdateTeamSubmit = async (team: { team_name: string; team_description?: string }) => {
     try {
       if (isAddingTeam) {
+        // Create new team
         await createTeam(team);
       } else if (selectedTeam) {
+        // Update existing team
         await updateTeam(selectedTeam.team_id, { name: team.team_name, description: team.team_description });
       }
-      setIsModalOpen(false);
+      setIsModalOpen(false); // Close modal after adding/updating the team
 
+      // Refetch the teams after creating or updating
       const token = localStorage.getItem('token');
       if (!token) {
         console.error('No token found. Redirect to login.');
@@ -81,7 +84,7 @@ const MiroStyleTeamPage = () => {
       const decoded: DecodedToken = jwtDecode(token);
       const userId = decoded.userId;
       const fetchedTeams = await getTeamsByUserId(userId);
-      setTeams(fetchedTeams.teams || []);
+      setTeams(fetchedTeams.teams || []); // Set the fetched teams
     } catch (error) {
       console.error('Failed to create/update team', error);
     }
@@ -139,7 +142,7 @@ const MiroStyleTeamPage = () => {
     borderRadius: '1rem',
     boxShadow: '0 6px 12px rgba(0, 0, 0, 0.1)',
     textAlign: 'center',
-    position: 'relative',
+    position: 'relative', // To position the settings icon
   };
 
   const cardTitleStyles = {
@@ -164,13 +167,14 @@ const MiroStyleTeamPage = () => {
     top: '10px',
     right: '10px',
     cursor: 'pointer',
-    color: '#3b82f6',
+    color: '#3b82f6', // Normal color for the settings icon
   };
 
   return (
     <div style={pageStyles}>
       <Header />
       <div style={containerStyles}>
+        {/* Title and Add Team Button Section */}
         <div style={titleSectionStyles}>
           <h1 style={titleStyles}>Select Team</h1>
           <button style={addButtonStyles} onClick={openAddTeamModal}>
@@ -178,6 +182,7 @@ const MiroStyleTeamPage = () => {
           </button>
         </div>
 
+        {/* Teams List */}
         <h2 style={titleStyles}>Teams</h2>
         <div style={gridStyles}>
           {teams.length === 0 ? (
@@ -186,10 +191,15 @@ const MiroStyleTeamPage = () => {
             teams.map((team) => (
               <div key={team.team_id} style={cardStyles}>
                 <h2 style={cardTitleStyles}>{team.team_name}</h2>
+
+                {/* Show settings icon if the user is the owner of the team */}
                 {team.owner === currentUserId && (
                   <SettingsIcon style={settingsIconStyles} onClick={() => handleEditTeam(team)} />
                 )}
-                <button style={buttonStyles}>View Details</button>
+
+                <button style={buttonStyles}>
+                  View Details
+                </button>
               </div>
             ))
           )}
@@ -201,7 +211,7 @@ const MiroStyleTeamPage = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleAddOrUpdateTeamSubmit}
-        selectedTeam={selectedTeam} 
+        selectedTeam={selectedTeam} // Pass selectedTeam for editing
       >
         {isAddingTeam ? (
           <div>
