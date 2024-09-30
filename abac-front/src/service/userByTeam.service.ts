@@ -24,7 +24,7 @@ export async function getTeamsByUserId(userId: number) {
 export async function getUsersByTeamId(teamId: number) {
   try {
     const response = await authAxiosClient.get(`/user_by_team/team/${teamId}`);
-    return response.data.userIds;
+    return response.data;
   } catch (error: any) {
     throw new Error('Failed to fetch users for team: ' + error.message);
   }
@@ -40,9 +40,9 @@ export async function createUserByTeam(userByTeamData: any) {
 }
 
 // Delete user by team ID
-export async function deleteUserByTeamId(teamId: number, userId: number) {
+export async function deleteUserById(id: number) {
   try {
-    const response = await authAxiosClient.delete(`/user_by_team/team/${teamId}/user/${userId}`);
+    const response = await authAxiosClient.delete(`/user_by_team/${id}`);
     return response.data;
   } catch (error: any) {
     throw new Error('Failed to delete user from team: ' + error.message);

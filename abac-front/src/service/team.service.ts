@@ -47,12 +47,20 @@ export async function createTeam({ team_name, owner, created_by, team_descriptio
 }
 
 // Update team by ID
-export async function updateTeam(teamId: number, updateData: { name?: string }) {
+export async function updateTeam(teamId: number, { team_name, team_description }: { team_name?: string; team_description?: string; }): Promise<any> {
   try {
-    const response = await authAxiosClient.patch(`/team/${teamId}`, updateData);
+    const response = await authAxiosClient.patch(`/team/${teamId}`, {
+      team_name,
+      team_description
+    });
+
+    if (response.status !== 200) {
+      throw new Error('Failed to update team');
+    }
+
     return response.data;
   } catch (error: any) {
-    throw new Error('Failed to update team: ' + error.message);
+    throw new Error('Failed to update team: ' + (error.response?.data?.message || error.message));
   }
 }
 

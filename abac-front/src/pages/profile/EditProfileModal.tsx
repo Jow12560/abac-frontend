@@ -7,6 +7,7 @@ interface ModalProps {
   onClose: () => void;
   profileData: {
     username: string;
+    password: string; // Change password type to string
     name: string;
     address: string;
     phone_number: string;
@@ -106,10 +107,20 @@ const EditProfileModal: React.FC<ModalProps> = ({ isOpen, onClose, profileData }
             />
           </div>
           <div>
-            <label>Full Name:</label>
+            <label>Password:</label>
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div>
+            <label>Name:</label>
             <input
               type="text"
-              name="fullname"
+              name="name"
               value={formData.name}
               onChange={handleChange}
             />

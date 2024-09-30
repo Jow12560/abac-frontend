@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { createTeam, updateTeam } from '../../service/team.service'; // Import updateTeam service
+import { createTeam, updateTeam, getTeamById } from '../../service/team.service'; 
 import { getAllUser } from '../../service/user.service';
-import { createUserByTeam } from '../../service/userByTeam.service';
-import { jwtDecode } from 'jwt-decode'; // Correctly import jwt-decode
+import { createUserByTeam, getUsersByTeamId, deleteUserById } from '../../service/userByTeam.service'; // Import required services
+import { jwtDecode } from 'jwt-decode';
+import Swal from 'sweetalert2'; // Import SweetAlert
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-  selectedTeam?: TeamData | null; // Add selectedTeam prop for editing
+  selectedTeam?: TeamData | null;
 }
 
 interface DecodedToken {
@@ -15,7 +16,7 @@ interface DecodedToken {
 }
 
 interface TeamData {
-  team_id?: number; // For editing we need the team ID
+  team_id?: number;
   team_name: string;
   owner: number;
   created_by: number;
@@ -27,11 +28,14 @@ const modalStyles = {
   top: '50%',
   left: '50%',
   transform: 'translate(-50%, -50%)',
+  width: '80%',
+  height: '80%',
   backgroundColor: '#fff',
   padding: '2rem',
   borderRadius: '1rem',
   boxShadow: '0 6px 12px rgba(0, 0, 0, 0.1)',
   zIndex: 1000,
+  overflowY: 'auto',
 };
 
 const overlayStyles = {
@@ -45,33 +49,44 @@ const overlayStyles = {
 };
 
 const CreateTeam: React.FC<ModalProps> = ({ isOpen, onClose, selectedTeam }) => {
-  const [teamName, setTeamName] = useState(selectedTeam?.team_name || ''); // Pre-populate for editing
-  const [teamDescription, setTeamDescription] = useState(selectedTeam?.team_description || ''); // Pre-populate for editing
-  const [usernameInput, setUsernameInput] = useState(''); // Input for typing a username
-  const [selectedUsers, setSelectedUsers] = useState<any[]>([]); // Users added to the team
-  const [allUsers, setAllUsers] = useState<any[]>([]); // Store all users
+  const [teamName, setTeamName] = useState(''); 
+  const [teamDescription, setTeamDescription] = useState('');
+  const [usernameInput, setUsernameInput] = useState('');
+  const [existingUsers, setExistingUsers] = useState<any[]>([]); // Users already in the team
+  const [newUsers, setNewUsers] = useState<any[]>([]); // Users added during the session
+  const [allUsers, setAllUsers] = useState<any[]>([]); 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [ownerId, setOwnerId] = useState<number | null>(null); // Store owner ID
 
-  // Fetch all users on component mount
+  // Fetch all users and existing team members when the modal opens
   useEffect(() => {
     async function fetchUsers() {
       try {
         const users = await getAllUser();
         setAllUsers(users);
+
+        if (selectedTeam) {
+          const teamData = await getTeamById(selectedTeam.team_id!); // Fetch team data by ID
+          setTeamName(teamData.team_name);
+          setTeamDescription(teamData.team_description || '');
+          setOwnerId(teamData.owner); // Set owner ID
+
+          const teamUsers = await getUsersByTeamId(selectedTeam.team_id!); // Fetch users of the selected team
+          setExistingUsers(teamUsers.users); // Ensure this is setting correctly
+        }
       } catch (error) {
-        console.error('Failed to fetch users:', error);
+        console.error('Failed to fetch users or team data:', error);
       }
     }
-
     fetchUsers();
-  }, []);
+  }, [selectedTeam]);
 
   // Handle username input change
   const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUsernameInput(e.target.value);
   };
 
-  // Add user to selectedUsers if it exists in allUsers
+  // Add user to the newUsers list if it exists in allUsers and isn't already in the existingUsers list
   const handleAddUser = () => {
     const matchedUser = allUsers.find((user) => user.username === usernameInput);
 
@@ -79,17 +94,45 @@ const CreateTeam: React.FC<ModalProps> = ({ isOpen, onClose, selectedTeam }) => 
       return alert('User not found with that username');
     }
 
-    if (selectedUsers.some((user) => user.username === matchedUser.username)) {
+    if (existingUsers.some((user) => user.username === matchedUser.username)) {
+      return alert('User is already part of the team');
+    }
+
+    if (newUsers.some((user) => user.username === matchedUser.username)) {
       return alert('User is already added');
     }
 
-    setSelectedUsers((prev) => [...prev, matchedUser]);
-    setUsernameInput(''); // Clear the username input after adding
+    setNewUsers((prev) => [...prev, matchedUser]);
+    setUsernameInput(''); 
   };
 
-  // Remove user from selectedUsers
-  const handleRemoveUser = (userId: number) => {
-    setSelectedUsers((prev) => prev.filter((user) => user.id !== userId));
+  // Remove user from either newUsers or existingUsers with confirmation
+  const handleRemoveUser = async (userId: number, isNewUser: boolean) => {
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Do you want to remove this user from the team?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, remove it!',
+      cancelButtonText: 'No, keep it',
+    });
+
+    if (result.isConfirmed) {
+      try {
+        if (!isNewUser && selectedTeam) {
+          // Only allow deleting users if they are part of the original team and the team is being edited
+          await deleteUserById(userId);
+        }
+        if (isNewUser) {
+          setNewUsers((prev) => prev.filter((user) => user.user_id !== userId));
+        } else {
+          setExistingUsers((prev) => prev.filter((user) => user.user_id !== userId));
+        }
+        Swal.fire('Removed!', 'The user has been removed from the team.', 'success');
+      } catch (error) {
+        Swal.fire('Failed!', 'Failed to remove the user from the team.', 'error');
+      }
+    }
   };
 
   // Handle form submission (both create and edit logic)
@@ -99,40 +142,27 @@ const CreateTeam: React.FC<ModalProps> = ({ isOpen, onClose, selectedTeam }) => 
       return alert('Please provide a team name');
     }
 
-    console.log('Team Name:', teamName); // Log team name
-    console.log('Team Description:', teamDescription); // Log team description
-
     setIsSubmitting(true);
 
     try {
-      const token = localStorage.getItem('token'); // Get token from localStorage
+      const token = localStorage.getItem('token');
       if (!token) {
         console.error('No token found. Redirect to login.');
-        return; // Handle no token case (e.g., redirect to login)
+        return;
       }
 
-      const decoded: DecodedToken = jwtDecode(token); // Decode the token to get the userId
+      const decoded: DecodedToken = jwtDecode(token);
       const userId = decoded.userId;
 
       if (selectedTeam) {
-        // If selectedTeam exists, we are editing a team
-        const updatedTeamData: TeamData = {
-          team_id: selectedTeam.team_id,
+        // Edit logic
+        await updateTeam(selectedTeam.team_id!, {
           team_name: teamName,
           team_description: teamDescription,
-          owner: selectedTeam.owner,
-          created_by: selectedTeam.created_by,
-        };
-
-        // Call update API
-        await updateTeam(updatedTeamData.team_id!, {
-          name: updatedTeamData.team_name,
-          description: updatedTeamData.team_description,
         });
-        console.log('Team Updated:', updatedTeamData); // Log updated team response
-
+        console.log('Team Updated:', selectedTeam); 
       } else {
-        // Else, create a new team
+        // Create logic
         const teamData: TeamData = {
           team_name: teamName,
           team_description: teamDescription,
@@ -140,33 +170,23 @@ const CreateTeam: React.FC<ModalProps> = ({ isOpen, onClose, selectedTeam }) => 
           created_by: userId,
         };
 
-        console.log('Data being sent to createTeam API:', teamData); // Log team data
-
-        // Create the team first
         const newTeam = await createTeam(teamData);
-        console.log('New Team Created:', newTeam); // Log the new team response
+        const teamId = newTeam.teamId;
 
-        const teamId = newTeam.teamId; // Get the teamId from the response
+        await createUserByTeam({ team_id: teamId, user_id: userId });
 
-        // Add the current user (creator) to the team
-        await createUserByTeam({
-          team_id: teamId,
-          user_id: userId,
-        });
-
-        // Add each selected user to the team
-        for (const user of selectedUsers) {
+        for (const user of newUsers) {
           await createUserByTeam({
             team_id: teamId,
-            user_id: user.id,
+            user_id: user.user_id,
           });
         }
       }
 
-      // Clear inputs and close modal after success
       setTeamName('');
       setTeamDescription('');
-      setSelectedUsers([]);
+      setNewUsers([]);
+      setExistingUsers([]);
       onClose();
     } catch (error) {
       console.error('Failed to create or update team or add members:', error);
@@ -183,7 +203,7 @@ const CreateTeam: React.FC<ModalProps> = ({ isOpen, onClose, selectedTeam }) => 
       <div style={overlayStyles} onClick={onClose} />
       <div style={modalStyles}>
         <button onClick={onClose} style={{ float: 'right', cursor: 'pointer' }}>Close</button>
-        <h2>{selectedTeam ? 'Edit Team' : 'Add New Team'}</h2> {/* Change title based on mode */}
+        <h2>{selectedTeam ? 'Edit Team' : 'Add New Team'}</h2>
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '1rem' }}>
             <label>
@@ -225,17 +245,40 @@ const CreateTeam: React.FC<ModalProps> = ({ isOpen, onClose, selectedTeam }) => 
             </button>
           </div>
 
-          {/* Display Selected Members with Remove Option */}
-          {selectedUsers.length > 0 && (
+          {/* Display Existing Members with Remove Option */}
+          {existingUsers.length > 0 && (
             <div style={{ marginBottom: '1rem' }}>
-              <h4>Selected Members:</h4>
+              <h4>Existing Members:</h4>
               <ul>
-                {selectedUsers.map((user) => (
-                  <li key={user.id}>
-                    {user.username}
+                {existingUsers
+                  .filter((user) => user.user_id !== ownerId) // Exclude the owner
+                  .map((user) => (
+                    <li key={user.user_id}>
+                      {user.user_name}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveUser(user.user_id, false)}
+                        style={{ marginLeft: '1rem', color: 'red', width: '30%', height: '100%', borderRadius: '0.25rem', fontSize: '1rem', cursor: 'pointer' }}
+                      >
+                        Remove
+                      </button>
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Display Newly Added Members with Remove Option */}
+          {newUsers.length > 0 && (
+            <div style={{ marginBottom: '1rem' }}>
+              <h4>Newly Added Members:</h4>
+              <ul>
+                {newUsers.map((user) => (
+                  <li key={user.user_id}>
+                    {user.user_name}
                     <button
                       type="button"
-                      onClick={() => handleRemoveUser(user.id)}
+                      onClick={() => handleRemoveUser(user.user_id, true)}
                       style={{ marginLeft: '1rem', color: 'red', width: '30%', height: '100%', borderRadius: '0.25rem', fontSize: '1rem', cursor: 'pointer' }}
                     >
                       Remove
