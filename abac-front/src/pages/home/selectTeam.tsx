@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 import { getTeamsByUserId } from '../../service/userByTeam.service';
-import { createTeam, updateTeam } from '../../service/team.service';
 import { jwtDecode } from 'jwt-decode';
 import Header from '../../components/common/header';
-import CreateTeam from './create_team_form'; // Import the modal form component
+import CreateTeamForm from './create_team_form'; // Modal for creating a team
+import EditTeamForm from './edit_team_form'; // Modal for editing a team
 import SettingsIcon from '@mui/icons-material/Settings'; // Importing SettingsIcon from MUI
 
 interface Team {
   team_id: number;
   team_name: string;
-  team_description?: string; // Add this if it exists
-  owner: number; // Add owner field to check ownership
+  team_description?: string;
+  owner: number; 
 }
 
 interface DecodedToken {
@@ -18,28 +19,29 @@ interface DecodedToken {
 }
 
 const MiroStyleTeamPage = () => {
-  const [teams, setTeams] = useState<Team[]>([]); // State for storing fetched teams
-  const [isModalOpen, setIsModalOpen] = useState(false); // State for managing modal visibility
-  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null); // For viewing/editing team details
-  const [isAddingTeam, setIsAddingTeam] = useState(false); // Manage whether to show the create form
-  const [currentUserId, setCurrentUserId] = useState<number | null>(null); // Store current user's ID
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAddingTeam, setIsAddingTeam] = useState(false);
+  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const navigate = useNavigate(); // Use navigate for routing
 
   // Fetch teams and the current user's ID on component mount
   useEffect(() => {
     async function fetchTeams() {
       try {
-        const token = localStorage.getItem('token'); // Get token from localStorage
+        const token = localStorage.getItem('token');
         if (!token) {
           console.error('No token found. Redirect to login.');
-          return; // Handle no token case
+          return;
         }
 
-        const decoded: DecodedToken = jwtDecode(token); // Decode the token to get the userId
+        const decoded: DecodedToken = jwtDecode(token);
         const userId = decoded.userId;
-        setCurrentUserId(userId); // Set the current user ID
+        setCurrentUserId(userId);
 
-        const fetchedTeams = await getTeamsByUserId(userId); // Fetch teams using user ID
-        setTeams(fetchedTeams.teams || []); // Set the fetched teams in the state
+        const fetchedTeams = await getTeamsByUserId(userId);
+        setTeams(fetchedTeams.teams || []);
       } catch (error) {
         console.error('Failed to fetch teams', error);
       }
@@ -50,155 +52,85 @@ const MiroStyleTeamPage = () => {
 
   // Handle opening the modal for adding a new team
   const openAddTeamModal = () => {
-    setSelectedTeam(null); // Clear selected team for the add team modal
-    setIsAddingTeam(true); // Switch to create team mode
-    setIsModalOpen(true); // Open the modal
+    setSelectedTeam(null);
+    setIsAddingTeam(true);
+    setIsModalOpen(true);
   };
 
-  // Handle editing the details of a team
-  const handleEditTeam = (team: Team) => {
-    setSelectedTeam(team); // Set selected team for editing
-    setIsAddingTeam(false); // Switch to edit mode
-    setIsModalOpen(true); // Open the modal
+  // Handle opening the modal for editing a team
+  const openEditTeamModal = (team: Team) => {
+    setSelectedTeam(team);
+    setIsAddingTeam(false);
+    setIsModalOpen(true);
   };
 
-  // Handle submission of new or updated team
-  const handleAddOrUpdateTeamSubmit = async (team: { team_name: string; team_description?: string }) => {
-    try {
-      if (isAddingTeam) {
-        // Create new team
-        await createTeam(team);
-      } else if (selectedTeam) {
-        // Update existing team
-        await updateTeam(selectedTeam.team_id, { name: team.team_name, description: team.team_description });
-      }
-      setIsModalOpen(false); // Close modal after adding/updating the team
-
-      // Refetch the teams after creating or updating
-      const token = localStorage.getItem('token');
-      if (!token) {
-        console.error('No token found. Redirect to login.');
-        return;
-      }
-
-      const decoded: DecodedToken = jwtDecode(token);
-      const userId = decoded.userId;
-      const fetchedTeams = await getTeamsByUserId(userId);
-      setTeams(fetchedTeams.teams || []); // Set the fetched teams
-    } catch (error) {
-      console.error('Failed to create/update team', error);
-    }
+  const closeModal = () => {
+    setIsModalOpen(false);
   };
 
-  const pageStyles = {
-    minHeight: '100vh',
-    backgroundColor: '#f7fafc',
-    padding: '2rem',
-    display: 'flex',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    flexDirection: 'column',
-    width: '100vw',
-    boxSizing: 'border-box',
-  };
-
-  const containerStyles = {
-    width: '100%',
-  };
-
-  const titleSectionStyles = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '2rem',
-  };
-
-  const titleStyles = {
-    fontSize: '2.5rem',
-    fontWeight: 'bold',
-    textAlign: 'left',
-  };
-
-  const addButtonStyles = {
-    padding: '0.75rem 1.5rem',
-    backgroundColor: '#10b981',
-    color: '#fff',
-    borderRadius: '0.5rem',
-    border: 'none',
-    fontSize: '1rem',
-    cursor: 'pointer',
-  };
-
-  const gridStyles = {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(4, 1fr)', // Four columns on desktop
-    gap: '1.5rem',
-    width: '100%',
-  };
-
-  const cardStyles = {
-    backgroundColor: '#fff',
-    padding: '1rem',
-    borderRadius: '1rem',
-    boxShadow: '0 6px 12px rgba(0, 0, 0, 0.1)',
-    textAlign: 'center',
-    position: 'relative', // To position the settings icon
-  };
-
-  const cardTitleStyles = {
-    fontSize: '1.5rem',
-    fontWeight: '600',
-    marginBottom: '1rem',
-  };
-
-  const buttonStyles = {
-    marginTop: '1rem',
-    padding: '0.75rem 1.5rem',
-    backgroundColor: '#3b82f6',
-    color: '#fff',
-    borderRadius: '0.75rem',
-    border: 'none',
-    fontSize: '1rem',
-    cursor: 'pointer',
-  };
-
-  const settingsIconStyles = {
-    position: 'relative',
-    top: '10px',
-    right: '10px',
-    cursor: 'pointer',
-    color: '#3b82f6', // Normal color for the settings icon
+  // Navigate to the team detail page
+  const handleViewTeam = (team_id: number) => {
+    navigate(`/team/${team_id}`); // Navigate to /team/{team_id}
   };
 
   return (
-    <div style={pageStyles}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#f7fafc', padding: '2rem', width: '100%' }}>
       <Header />
-      <div style={containerStyles}>
-        {/* Title and Add Team Button Section */}
-        <div style={titleSectionStyles}>
-          <h1 style={titleStyles}>Select Team</h1>
-          <button style={addButtonStyles} onClick={openAddTeamModal}>
+      <div style={{ width: '100%' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem' }}>
+          <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>Select Team</h1>
+          <button
+            style={{
+              padding: '0.75rem 1.5rem',
+              backgroundColor: '#10b981',
+              color: '#fff',
+              borderRadius: '0.5rem',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+            onClick={openAddTeamModal}
+          >
             Add Team
           </button>
         </div>
 
-        {/* Teams List */}
-        <h2 style={titleStyles}>Teams</h2>
-        <div style={gridStyles}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem' }}>
           {teams.length === 0 ? (
             <p>No teams found.</p>
           ) : (
             teams.map((team) => (
-              <div key={team.team_id} style={cardStyles}>
-                <h2 style={cardTitleStyles}>{team.team_name}</h2>
+              <div
+                key={team.team_id}
+                style={{
+                  backgroundColor: '#fff',
+                  padding: '1rem',
+                  borderRadius: '1rem',
+                  boxShadow: '0 6px 12px rgba(0, 0, 0, 0.1)',
+                  textAlign: 'center',
+                  position: 'relative'
+                }}
+              >
+                <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1rem' }}>{team.team_name}</h2>
 
-                {/* Show settings icon if the user is the owner of the team */}
                 {team.owner === currentUserId && (
-                  <SettingsIcon style={settingsIconStyles} onClick={() => handleEditTeam(team)} />
+                  <SettingsIcon
+                    style={{ position: 'absolute', top: '10px', right: '10px', cursor: 'pointer' }}
+                    onClick={() => openEditTeamModal(team)}
+                  />
                 )}
-
-                <button style={buttonStyles}>
-                  View Details
+                <button
+                  style={{
+                    marginTop: '1rem',
+                    padding: '0.75rem 1.5rem',
+                    backgroundColor: '#3b82f6',
+                    color: '#fff',
+                    borderRadius: '0.75rem',
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => handleViewTeam(team.team_id)} // Navigate to the team page on click
+                >
+                  View Team
                 </button>
               </div>
             ))
@@ -206,26 +138,14 @@ const MiroStyleTeamPage = () => {
         </div>
       </div>
 
-      {/* Modal for Adding or Editing Team */}
-      <CreateTeam
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={handleAddOrUpdateTeamSubmit}
-        selectedTeam={selectedTeam} // Pass selectedTeam for editing
-      >
-        {isAddingTeam ? (
-          <div>
-            <h2>Add New Team</h2>
-          </div>
+      {/* Conditionally render CreateTeamForm or EditTeamForm based on isAddingTeam */}
+      {isModalOpen && (
+        isAddingTeam ? (
+          <CreateTeamForm isOpen={isModalOpen} onClose={closeModal} />
         ) : (
-          selectedTeam && (
-            <div>
-              <h2>{selectedTeam.team_name}</h2>
-              <p>Team ID: {selectedTeam.team_id}</p>
-            </div>
-          )
-        )}
-      </CreateTeam>
+          <EditTeamForm isOpen={isModalOpen} onClose={closeModal} selectedTeam={selectedTeam} />
+        )
+      )}
     </div>
   );
 };

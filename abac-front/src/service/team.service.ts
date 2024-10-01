@@ -21,10 +21,10 @@ export async function getTeamById(teamId: number) {
 }
 
 // Create a new team
-export async function createTeam({ team_name, owner, created_by, team_description }: { 
+export async function createTeam({ team_name, owner, create_by, team_description }: { 
   team_name: string, 
   owner: number, 
-  created_by: number, 
+  create_by: number, 
   team_description?: string  // Optional description
 }) {
   try {
@@ -32,7 +32,7 @@ export async function createTeam({ team_name, owner, created_by, team_descriptio
     const payload: any = { 
       team_name, 
       owner, 
-      created_by 
+      create_by 
     };
 
     if (team_description) {

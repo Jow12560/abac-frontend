@@ -39,12 +39,11 @@ export async function createUserByTeam(userByTeamData: any) {
   }
 }
 
-// Delete user by team ID
-export async function deleteUserById(id: number) {
+export async function deleteUserById(userByTeamId: number) {
   try {
-    const response = await authAxiosClient.delete(`/user_by_team/${id}`);
+    const response = await authAxiosClient.delete(`/user_by_team/${userByTeamId}`);
     return response.data;
-  } catch (error: any) {
+  } catch (error) {
     throw new Error('Failed to delete user from team: ' + error.message);
   }
 }

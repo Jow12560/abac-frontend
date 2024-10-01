@@ -20,10 +20,24 @@ export async function getTaskById(taskId: number) {
   }
 }
 
-// Create a new task
-export async function createTask({ title, description }: { title: string; description: string }) {
+export async function createTask({
+  title,
+  task_description = '', // Updated to match your DB column
+  team_id,
+  create_by, // Extracted from token
+}: {
+  title: string;
+  task_description: string;
+  team_id: number; // Add team_id here
+  create_by: number; // Add user ID here from token
+}) {
   try {
-    const response = await authAxiosClient.post('/task', { title, description });
+    const response = await authAxiosClient.post('/task', {
+      title,
+      task_description,
+      team_id, // Team ID
+      create_by, // User ID
+    });
     return response.data;
   } catch (error: any) {
     throw new Error('Failed to create task: ' + error.message);
