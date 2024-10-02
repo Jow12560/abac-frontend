@@ -20,16 +20,27 @@ export async function getTaskById(taskId: number) {
   }
 }
 
+export async function getTasksByTeamId(teamId: number) {
+  try {
+    const response = await authAxiosClient.get(`/task/team/${teamId}`);
+    return response.data.records;
+  } catch (error: any) {
+    throw new Error('Failed to fetch tasks by team ID: ' + error.message);
+  }
+}
+
 export async function createTask({
   title,
   task_description = '', // Updated to match your DB column
   team_id,
   create_by, // Extracted from token
+  due_date = '', // Optional due date
 }: {
   title: string;
   task_description: string;
   team_id: number; // Add team_id here
   create_by: number; // Add user ID here from token
+  due_date?: string; // Optional due date
 }) {
   try {
     const response = await authAxiosClient.post('/task', {
@@ -37,6 +48,7 @@ export async function createTask({
       task_description,
       team_id, // Team ID
       create_by, // User ID
+      due_date, // Optional due date
     });
     return response.data;
   } catch (error: any) {

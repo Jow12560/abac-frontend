@@ -1,11 +1,11 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, NavigateFunction } from 'react-router-dom';
 
 // Placeholder for logout functionality
-const handleLogout = () => {
-  localStorage.removeItem('token'); // Remove the token (if using JWT)
-  // You can add any other logout logic here
-  window.location.href = '/'; // Redirect to login page
+const handleLogout = (navigate: NavigateFunction) => {
+  localStorage.removeItem('token'); // Remove the token
+  // You can add any other logout logic here (e.g., clearing other session data)
+  navigate('/', { replace: true }); // Redirect to login page and replace the current entry in the history stack
 };
 
 const Header = () => {
@@ -35,7 +35,7 @@ const Header = () => {
         </div>
 
         {/* Logout Button */}
-        <button style={logoutButtonStyles} onClick={handleLogout}>
+        <button style={logoutButtonStyles} onClick={() => handleLogout(navigate)}>
           Logout
         </button>
       </div>
@@ -54,22 +54,26 @@ const headerStyles = {
   boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
   width: '100%', // Full width
   marginTop: '-4.0rem',
+  flexWrap: 'wrap', // Allow wrapping for smaller screens
 };
 
 const leftSectionStyles = {
   flex: 1, // Push the name to the left
+  textAlign: 'center', // Center text on smaller screens
 };
 
 const titleStyles = {
   fontSize: '1.75rem',
   fontWeight: 'bold',
-  marginLeft: '-85rem',
   cursor: 'pointer', // Add cursor pointer to indicate clickable
+  margin: '0', // Remove margin
 };
 
 const rightSectionStyles = {
   display: 'flex',
   alignItems: 'center',
+  justifyContent: 'center', // Center items on smaller screens
+  flexWrap: 'wrap', // Allow wrapping for smaller screens
 };
 
 const profileStyles = {
@@ -77,6 +81,7 @@ const profileStyles = {
   alignItems: 'center',
   marginRight: '1rem',
   cursor: 'pointer',
+  marginBottom: '0.5rem', // Add margin bottom for spacing on smaller screens
 };
 
 const iconStyles = {
@@ -98,6 +103,28 @@ const logoutButtonStyles = {
   border: 'none',
   borderRadius: '0.5rem',
   cursor: 'pointer',
+  marginBottom: '0.5rem', // Add margin bottom for spacing on smaller screens
 };
+
+// Media queries for responsive design
+const mediaQueries = `
+  @media (max-width: 768px) {
+    ${headerStyles} {
+      flexDirection: 'column',
+      alignItems: 'center',
+    }
+    ${leftSectionStyles} {
+      textAlign: 'center',
+      marginBottom: '1rem',
+    }
+    ${rightSectionStyles} {
+      justifyContent: 'center',
+    }
+  }
+`;
+
+// Inject media queries into the document
+const styleSheet = document.styleSheets[0];
+styleSheet.insertRule(mediaQueries, styleSheet.cssRules.length);
 
 export default Header;

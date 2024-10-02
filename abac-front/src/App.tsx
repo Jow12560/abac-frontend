@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./pages/login/login";
 import RegisterPage from "./pages/register/register";
 import MiroStyleTeamPage from "./pages/home/selectTeam";
@@ -6,6 +6,12 @@ import ProfilePage from "./pages/profile/profile";
 import TeamPage from "./pages/team/TeamPage";
 import { Toaster } from "react-hot-toast"; // For toast notifications
 import "./App.css"; // Global CSS if you use it
+
+// Create a Private Route wrapper to check for the token
+const PrivateRoute = ({ children }: { children: JSX.Element }) => {
+  const token = localStorage.getItem('token');
+  return token ? children : <Navigate to="/" />;
+};
 
 function App() {
   return (
@@ -18,12 +24,35 @@ function App() {
         }}
       />
       <Routes>
-        {/* Only the login page is active for now */}
+        {/* Public Routes */}
         <Route path="/" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/select-team" element={<MiroStyleTeamPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/team/:team_id" element={<TeamPage />} />
+
+        {/* Private Routes - protected by token */}
+        <Route 
+          path="/select-team" 
+          element={
+            <PrivateRoute>
+              <MiroStyleTeamPage />
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/profile" 
+          element={
+            <PrivateRoute>
+              <ProfilePage />
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/team/:team_id" 
+          element={
+            <PrivateRoute>
+              <TeamPage />
+            </PrivateRoute>
+          } 
+        />
       </Routes>
     </Router>
   );
