@@ -9,7 +9,10 @@ import EditTaskModal from './edit_task_modal';
 import Header from '../../components/common/header'; // Import the header component
 import { statusColors } from '../../config/color'; // Import the status colors
 import SettingsIcon from '@mui/icons-material/Settings'; // Importing SettingsIcon from MUI
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever'; // Import Delete Icon
+import Swal from 'sweetalert2'; // Import Swal for confirmation dialog
 import TaskFilter from './task_filter'; // Import the TaskFilter component
+import { deleteTask } from '../../service/task.service'; // Import delete task function
 
 const TeamPage: React.FC = () => {
   const { team_id } = useParams<{ team_id: string }>(); // Get team ID from route params
@@ -123,6 +126,29 @@ const TeamPage: React.FC = () => {
     return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
   };
 
+  // Handle task deletion with confirmation dialog
+  const handleDeleteTask = async (taskId: number) => {
+    const confirmation = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Do you want to delete this task? This action cannot be undone.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, delete it!',
+      cancelButtonText: 'No, cancel',
+    });
+
+    if (confirmation.isConfirmed) {
+      try {
+        await deleteTask(taskId);
+        Swal.fire('Deleted!', 'The task has been deleted.', 'success');
+        setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
+        setFilteredTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
+      } catch (error) {
+        Swal.fire('Failed', 'Failed to delete the task. Please try again.', 'error');
+      }
+    }
+  };
+
   // Task List Render Function (reused for both All Tasks and My Tasks)
   const renderTaskList = (taskList: any[]) => {
     return (
@@ -137,7 +163,7 @@ const TeamPage: React.FC = () => {
               borderRadius: '0.5rem',
               boxShadow: '0 6px 12px rgba(0, 0, 0, 0.1)',
               maxWidth: 'calc(30% - 1rem)',
-              position: 'relative', // For positioning SettingsIcon
+              position: 'relative', // For positioning SettingsIcon and DeleteIcon
             }}
           >
             {/* Due Date at the top left */}
@@ -169,9 +195,23 @@ const TeamPage: React.FC = () => {
                 style={{
                   position: 'absolute',
                   top: '10px',
-                  right: '10px',
+                  right: '50px',
                   cursor: 'pointer',
                   color: '#3b82f6',
+                }}
+              />
+            )}
+
+            {/* Delete Task Icon */}
+            {(task.create_by === userId || assignedTasks.some((assignedTask) => assignedTask.id === task.id)) && (
+              <DeleteForeverIcon
+                onClick={() => handleDeleteTask(task.id)} // Handle delete task
+                style={{
+                  position: 'absolute',
+                  top: '10px',
+                  right: '10px',
+                  cursor: 'pointer',
+                  color: 'red',
                 }}
               />
             )}

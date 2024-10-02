@@ -54,6 +54,7 @@ const headerStyles = {
   boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
   width: '100%', // Full width
   marginTop: '-4.0rem',
+  marginLeft: '-4.0rem',
   flexWrap: 'wrap', // Allow wrapping for smaller screens
 };
 

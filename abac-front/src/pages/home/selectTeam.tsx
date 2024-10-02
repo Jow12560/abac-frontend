@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate
 import { getTeamsByUserId } from '../../service/userByTeam.service';
+import { deleteTeam } from '../../service/team.service'; // Import the deleteTeam function
 import { jwtDecode } from 'jwt-decode';
 import Header from '../../components/common/header';
 import CreateTeamForm from './create_team_form'; // Modal for creating a team
 import EditTeamForm from './edit_team_form'; // Modal for editing a team
 import SettingsIcon from '@mui/icons-material/Settings'; // Importing SettingsIcon from MUI
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever'; // Importing DeleteForeverIcon
+import Swal from 'sweetalert2'; // For sweet alert
 
 interface Team {
   team_id: number;
@@ -68,6 +71,28 @@ const MiroStyleTeamPage = () => {
     setIsModalOpen(false);
   };
 
+  // Handle deleting a team
+  const handleDeleteTeam = async (team: Team) => {
+    const confirmation = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Do you want to delete this team? This action cannot be undone.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, delete it!',
+      cancelButtonText: 'No, cancel',
+    });
+
+    if (confirmation.isConfirmed) {
+      try {
+        await deleteTeam(team.team_id);
+        Swal.fire('Deleted!', 'The team has been deleted.', 'success');
+        setTeams((prevTeams) => prevTeams.filter((t) => t.team_id !== team.team_id)); // Remove the deleted team from the list
+      } catch (error) {
+        Swal.fire('Failed', 'Failed to delete the team. Please try again.', 'error');
+      }
+    }
+  };
+
   // Navigate to the team detail page
   const handleViewTeam = (team_id: number) => {
     navigate(`/team/${team_id}`); // Navigate to /team/{team_id}
@@ -113,10 +138,16 @@ const MiroStyleTeamPage = () => {
                 <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1rem' }}>{team.team_name}</h2>
 
                 {team.owner === currentUserId && (
-                  <SettingsIcon
-                    style={{ position: 'absolute', top: '10px', right: '10px', cursor: 'pointer' }}
-                    onClick={() => openEditTeamModal(team)}
-                  />
+                  <div style={{ position: 'absolute', top: '10px', right: '10px', display: 'flex', gap: '10px' }}>
+                    <SettingsIcon
+                      style={{ cursor: 'pointer', color: '#3b82f6' }}
+                      onClick={() => openEditTeamModal(team)}
+                    />
+                    <DeleteForeverIcon
+                      style={{ cursor: 'pointer', color: 'red' }}
+                      onClick={() => handleDeleteTeam(team)}
+                    />
+                  </div>
                 )}
                 <button
                   style={{
