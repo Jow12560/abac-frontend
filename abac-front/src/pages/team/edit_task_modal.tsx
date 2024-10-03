@@ -3,17 +3,17 @@ import { updateTask } from '../../service/task.service'; // Service for updating
 import { getUsersByTeamId } from '../../service/userByTeam.service'; // Get users by team
 import { createTaskByUser, deleteTasksByTaskId } from '../../service/taskByUser.service'; // Service for assigning and removing users
 
-// Define the Task interface with proper typing
 interface Task {
   id: number;
   title: string;
   description: string;
-  due_date: string;  // Ensure due_date is included
+  due_date: string;
+  status: string;  // Include status in Task interface
   assigned_users: number[];
 }
 
 interface EditTaskModalProps {
-  task: Task;  // Task is now fully typed
+  task: Task;
   onClose: () => void;
   teamId: string;
 }
@@ -22,6 +22,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, onClose, teamId }) 
   const [title, setTitle] = useState(task?.title || '');
   const [taskDescription, setTaskDescription] = useState(task?.description || '');
   const [dueDate, setDueDate] = useState(task?.due_date || ''); // Due date field
+  const [status, setStatus] = useState(task?.status || 'รอเริ่ม'); // Default to "รอเริ่ม" (Pending Start)
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [users, setUsers] = useState<any[]>([]); // Store users for assignment
   const [assignedUsers, setAssignedUsers] = useState<number[]>(task?.assigned_users || []); // Store the selected users
@@ -38,14 +39,15 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, onClose, teamId }) 
     }
 
     fetchUsers();
-  }, [teamId]); // Ensure the teamId is passed correctly
+  }, [teamId]);
 
   useEffect(() => {
     if (task) {
       setTitle(task.title);
       setTaskDescription(task.description);
       setDueDate(task.due_date);
-      setAssignedUsers(task.assigned_users || []); // Set initially assigned users
+      setAssignedUsers(task.assigned_users || []);
+      setStatus(task.status); // Set the task's status
     }
   }, [task]);
 
@@ -54,28 +56,29 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, onClose, teamId }) 
     setIsSubmitting(true);
 
     try {
-      // Update the task details
+      // Update the task details, including status
       await updateTask(task.id, {
         title,
-        description: taskDescription, // Corrected property name
-        due_date: dueDate, // Include due_date in the payload
+        description: taskDescription,
+        due_date: dueDate,
+        status, // Include status in the payload
       });
 
       // Delete all previous task_by_user records for the task
-      await deleteTasksByTaskId(task.id); // This will delete all users assigned to the task
+      await deleteTasksByTaskId(task.id);
 
       // Add the new user assignments
       for (const userId of assignedUsers) {
         await createTaskByUser({
-          task_id: task.id, // Use the task ID
-          user_id: userId,  // New assigned user ID
+          task_id: task.id,
+          user_id: userId,
         });
       }
 
       onClose(); // Close the modal after updating the task
       window.location.reload(); // Refresh the data after completing the update
     } catch (error) {
-      console.error((error as Error).message); 
+      console.error((error as Error).message);
       alert('Failed to update task. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -126,6 +129,15 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, onClose, teamId }) 
             />
           </div>
           <div>
+            <label>Status:</label>
+            <select value={status} onChange={(e) => setStatus(e.target.value)} style={{ padding: '0.5rem', width: '100%', marginBottom: '1rem' }}>
+              <option value="รอเริ่ม">รอเริ่ม (Pending Start)</option>
+              <option value="กำลังทำ">กำลังทำ (In Progress)</option>
+              <option value="เสร็จ">เสร็จ (Completed)</option>
+              <option value="ล้มเหลว">ล้มเหลว (Failed)</option>
+            </select>
+          </div>
+          <div>
             <label>Assign To:</label>
             <div style={{ marginBottom: '1rem' }}>
               {users.map((user) => (
@@ -165,7 +177,6 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, onClose, teamId }) 
 
 export default EditTaskModal;
 
-// Add your modal styles here
 const modalStyles: CSSProperties = {
   padding: '2rem',
   backgroundColor: '#fff',
