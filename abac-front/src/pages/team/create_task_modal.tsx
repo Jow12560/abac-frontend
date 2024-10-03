@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,CSSProperties } from 'react';
 import { createTask } from '../../service/task.service';
 import { createTaskByUser } from '../../service/taskByUser.service'; // Import the createTaskByUser function
 import { getUsersByTeamId } from '../../service/userByTeam.service'; // Function to get users by team
@@ -75,7 +75,11 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ onClose, teamId }) =>
       onClose(); // Close the modal after successful creation
       window.location.reload(); // Refresh the page
     } catch (error) {
-      console.error(error.message);
+      if (error instanceof Error) {
+        console.error(error.message);
+      } else {
+        console.error('An unknown error occurred');
+      }
       alert('Failed to create task. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -157,7 +161,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ onClose, teamId }) =>
 export default CreateTaskModal;
 
 // Add your modal styles here
-const modalStyles = {
+const modalStyles:CSSProperties = {
   padding: '2rem',
   backgroundColor: '#fff',
   borderRadius: '0.75rem',

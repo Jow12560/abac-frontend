@@ -1,17 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, CSSProperties } from 'react';
 import { updateTask } from '../../service/task.service'; // Service for updating a task
 import { getUsersByTeamId } from '../../service/userByTeam.service'; // Get users by team
 import { createTaskByUser, deleteTasksByTaskId } from '../../service/taskByUser.service'; // Service for assigning and removing users
 
+// Define the Task interface with proper typing
+interface Task {
+  id: number;
+  title: string;
+  description: string;
+  due_date: string;  // Ensure due_date is included
+  assigned_users: number[];
+}
+
 interface EditTaskModalProps {
-  task: any; // Pass the selected task
+  task: Task;  // Task is now fully typed
   onClose: () => void;
-  teamId: string; // Pass the team ID
+  teamId: string;
 }
 
 const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, onClose, teamId }) => {
   const [title, setTitle] = useState(task?.title || '');
-  const [taskDescription, setTaskDescription] = useState(task?.task_description || '');
+  const [taskDescription, setTaskDescription] = useState(task?.description || '');
   const [dueDate, setDueDate] = useState(task?.due_date || ''); // Due date field
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [users, setUsers] = useState<any[]>([]); // Store users for assignment
@@ -21,7 +30,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, onClose, teamId }) 
   useEffect(() => {
     async function fetchUsers() {
       try {
-        const usersData = await getUsersByTeamId(Number(teamId)); // Make sure teamId is handled correctly here
+        const usersData = await getUsersByTeamId(Number(teamId)); // Ensure teamId is handled correctly here
         setUsers(usersData.users || []); // Set users in state
       } catch (error) {
         console.error('Failed to fetch users:', error);
@@ -34,7 +43,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, onClose, teamId }) 
   useEffect(() => {
     if (task) {
       setTitle(task.title);
-      setTaskDescription(task.task_description);
+      setTaskDescription(task.description);
       setDueDate(task.due_date);
       setAssignedUsers(task.assigned_users || []); // Set initially assigned users
     }
@@ -48,7 +57,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, onClose, teamId }) 
       // Update the task details
       await updateTask(task.id, {
         title,
-        task_description: taskDescription,
+        description: taskDescription, // Corrected property name
         due_date: dueDate, // Include due_date in the payload
       });
 
@@ -59,14 +68,14 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, onClose, teamId }) 
       for (const userId of assignedUsers) {
         await createTaskByUser({
           task_id: task.id, // Use the task ID
-          user_id: userId, // New assigned user ID
+          user_id: userId,  // New assigned user ID
         });
       }
 
       onClose(); // Close the modal after updating the task
       window.location.reload(); // Refresh the data after completing the update
     } catch (error) {
-      console.error(error.message);
+      console.error((error as Error).message); 
       alert('Failed to update task. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -157,7 +166,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, onClose, teamId }) 
 export default EditTaskModal;
 
 // Add your modal styles here
-const modalStyles = {
+const modalStyles: CSSProperties = {
   padding: '2rem',
   backgroundColor: '#fff',
   borderRadius: '0.75rem',
@@ -166,11 +175,11 @@ const modalStyles = {
   height: '80%',
   zIndex: 1001,
   position: 'relative',
-  overflowY: 'auto',
+  overflowY: 'scroll' as 'scroll',
 };
 
-const overlayStyles = {
-  position: 'fixed' as 'fixed',
+const overlayStyles: CSSProperties = {
+  position: 'fixed',
   top: 0,
   left: 0,
   right: 0,
@@ -182,8 +191,8 @@ const overlayStyles = {
   zIndex: 1000,
 };
 
-const closeButtonStyles = {
-  position: 'absolute' as 'absolute',
+const closeButtonStyles: CSSProperties = {
+  position: 'absolute',
   top: '1rem',
   right: '1rem',
   background: 'none',

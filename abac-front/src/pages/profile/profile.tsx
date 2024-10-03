@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect ,CSSProperties} from 'react';
 import { getUserById } from '../../service/user.service';
 import { jwtDecode } from 'jwt-decode'; // Import jwt-decode for decoding the token
 import EditProfileModal from './EditProfileModal';
@@ -12,11 +12,12 @@ const ProfilePage: React.FC = () => {
   const [profileData, setProfileData] = useState({
     username: '',
     name: '',
+    password: '',
     address: '',
     phone_number: '',
   });
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [, setMessage] = useState<string | null>(null);
 
   // Fetch user profile when component mounts
   useEffect(() => {
@@ -48,7 +49,7 @@ const ProfilePage: React.FC = () => {
   };
 
   // Styles (similar to MiroStyleTeamPage)
-  const pageStyles = {
+  const pageStyles:CSSProperties = {
     minHeight: '100vh',
     backgroundColor: '#f7fafc',
     padding: '2rem',
@@ -77,15 +78,7 @@ const ProfilePage: React.FC = () => {
     textAlign: 'left' as const,
   };
 
-  const addButtonStyles = {
-    padding: '0.75rem 1.5rem',
-    backgroundColor: '#10b981',
-    color: '#fff',
-    borderRadius: '0.5rem',
-    border: 'none',
-    fontSize: '1rem',
-    cursor: 'pointer',
-  };
+ 
 
   const gridStyles = {
     display: 'grid',

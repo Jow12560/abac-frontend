@@ -1,4 +1,5 @@
 import { useNavigate, NavigateFunction } from 'react-router-dom';
+import  { CSSProperties } from 'react';
 
 // Placeholder for logout functionality
 const handleLogout = (navigate: NavigateFunction) => {
@@ -54,10 +55,10 @@ const headerStyles = {
   width: '100%', // Full width
   marginTop: '-4.0rem',
   marginLeft: '-4.0rem',
-  flexWrap: 'wrap', // Allow wrapping for smaller screens
+  flexWrap: 'wrap' as 'wrap', // Allow wrapping for smaller screens
 };
 
-const leftSectionStyles = {
+const leftSectionStyles:CSSProperties = {
   flex: 1, // Push the name to the left
   textAlign: 'center', // Center text on smaller screens
 };
@@ -73,7 +74,7 @@ const rightSectionStyles = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center', // Center items on smaller screens
-  flexWrap: 'wrap', // Allow wrapping for smaller screens
+  flexWrap: 'wrap' as 'wrap', // Allow wrapping for smaller screens
 };
 
 const profileStyles = {

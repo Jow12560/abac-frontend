@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,CSSProperties } from 'react';
 import { createTeam } from '../../service/team.service'; 
 import { createUserByTeam } from '../../service/userByTeam.service';
 import { getAllUser } from '../../service/user.service';
 import {jwtDecode} from 'jwt-decode';
 import Swal from 'sweetalert2';
 
-const modalStyles = {
+const modalStyles: CSSProperties = {
   position: 'fixed' as 'fixed',
   top: '50%',
   left: '50%',

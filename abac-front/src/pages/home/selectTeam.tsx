@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import  { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate
 import { getTeamsByUserId } from '../../service/userByTeam.service';
 import { deleteTeam } from '../../service/team.service'; // Import the deleteTeam function

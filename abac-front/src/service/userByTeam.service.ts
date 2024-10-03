@@ -44,6 +44,6 @@ export async function deleteUserById(userByTeamId: number) {
     const response = await authAxiosClient.delete(`/user_by_team/${userByTeamId}`);
     return response.data;
   } catch (error) {
-    throw new Error('Failed to delete user from team: ' + error.message);
+    throw new Error('Failed to delete user from team: ' + (error as Error).message);
   }
 }

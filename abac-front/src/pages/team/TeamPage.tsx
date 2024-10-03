@@ -14,6 +14,7 @@ import Swal from 'sweetalert2'; // Import Swal for confirmation dialog
 import TaskFilter from './task_filter'; // Import the TaskFilter component
 import { deleteTask } from '../../service/task.service'; // Import delete task function
 
+
 const TeamPage: React.FC = () => {
   const { team_id } = useParams<{ team_id: string }>(); // Get team ID from route params
   const [teamName, setTeamName] = useState(''); // Store team name
@@ -35,6 +36,10 @@ const TeamPage: React.FC = () => {
     }
   }, []);
 
+  interface Task {
+    id: Number;
+    // other properties...
+  }
   // Fetch team details and tasks assigned to the current user
   useEffect(() => {
     async function fetchTeamAndTasks() {
@@ -50,7 +55,8 @@ const TeamPage: React.FC = () => {
         // Fetch tasks assigned to the current user
         if (userId !== null) {
           const assignedTaskIds = await getTaskIdsByUserId(userId);
-          const assignedTasksList = fetchedTasks.filter((task) => assignedTaskIds.includes(task.id));
+          // const assignedTasksList = fetchedTasks.filter((task) => assignedTaskIds.includes(task.id));
+          const assignedTasksList = fetchedTasks.filter((task: Task) => assignedTaskIds.includes(task.id));  // Explicitly type 'task'
           setAssignedTasks(assignedTasksList); // Set tasks assigned to the current user
         }
       } catch (error) {
@@ -285,14 +291,14 @@ const TeamPage: React.FC = () => {
         )}
 
         {/* Create task modal */}
-        {isModalOpen && <CreateTaskModal onClose={handleModalClose} teamId={team_id} />}
+        {isModalOpen && <CreateTaskModal onClose={handleModalClose} teamId={team_id || ''} />}
 
         {/* Edit task modal */}
         {isEditModalOpen && selectedTask && (
           <EditTaskModal 
             task={selectedTask} 
             onClose={handleEditModalClose} 
-            teamId={team_id} // Pass the teamId prop here
+            teamId={team_id || ''} // Pass the teamId prop here
           />
         )}
       </div>

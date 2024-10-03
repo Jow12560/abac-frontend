@@ -57,12 +57,12 @@ export async function createTask({
 }
 
 // Update task by ID
-export async function updateTask(taskId: number, updateData: { title?: string; description?: string }) {
+export async function updateTask(taskId: number, updateData: { title?: string; description?: string; due_date?: string }) {
   try {
     const response = await authAxiosClient.patch(`/task/${taskId}`, updateData);
     return response.data;
   } catch (error: any) {
-    throw new Error('Failed to update task: ' + error.message);
+    throw new Error('Failed to update task: ' + (error as Error).message);
   }
 }
 
