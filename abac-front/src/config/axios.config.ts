@@ -15,7 +15,10 @@ authAxiosClient.interceptors.response.use(
     return response;
   },
   (error) => {
-    throw new Error(error.response.data.message);
+    if (!error.response) {
+      throw new Error("Network error. Please try again later.");
+    }
+    throw new Error(error.response.data.message || "An error occurred.");
   }
 );
 
