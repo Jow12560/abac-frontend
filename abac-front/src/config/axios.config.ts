@@ -2,7 +2,10 @@ import axios from "axios";
 
 const ENDPOINT = import.meta.env.VITE_BACKEND_URL;
 
-const authAxiosClient = axios.create();
+const authAxiosClient = axios.create({
+  baseURL: ENDPOINT,
+  withCredentials: true, // If you're dealing with cookies or sessions
+});
 
 authAxiosClient.interceptors.request.use((config) => {
   config.headers["x-api-key"] = import.meta.env.VITE_API_KEY;
