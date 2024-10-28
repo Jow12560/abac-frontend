@@ -1,31 +1,31 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { getTasksByTeamId } from '../../service/task.service'; // Fetch tasks by team ID
-import { getTeamById } from '../../service/team.service'; // Fetch team details
-import { getTaskIdsByUserId } from '../../service/taskByUser.service'; // Get task IDs by user ID
-import { jwtDecode } from 'jwt-decode'; // Decode the token to get the current user ID
+import { getTasksByTeamId } from '../../service/task.service';
+import { getTeamById } from '../../service/team.service';
+import { getTaskIdsByUserId } from '../../service/taskByUser.service';
+import {jwtDecode} from 'jwt-decode';
 import CreateTaskModal from './create_task_modal';
 import EditTaskModal from './edit_task_modal';
-import Header from '../../components/common/header'; // Import the header component
-import { statusColors } from '../../config/color'; // Import the status colors
-import SettingsIcon from '@mui/icons-material/Settings'; // Importing SettingsIcon from MUI
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever'; // Import Delete Icon
-import Swal from 'sweetalert2'; // Import Swal for confirmation dialog
-import TaskFilter from './task_filter'; // Import the TaskFilter component
-import { deleteTask } from '../../service/task.service'; // Import delete task function
-
+import Header from '../../components/common/header';
+import { statusColors } from '../../config/color';
+import SettingsIcon from '@mui/icons-material/Settings';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import Swal from 'sweetalert2';
+import TaskFilter from './task_filter';
+import { deleteTask } from '../../service/task.service';
 
 const TeamPage: React.FC = () => {
-  const { team_id } = useParams<{ team_id: string }>(); // Get team ID from route params
-  const [teamName, setTeamName] = useState(''); // Store team name
-  const [tasks, setTasks] = useState<any[]>([]); // Store tasks
-  const [filteredTasks, setFilteredTasks] = useState<any[]>([]); // Store filtered tasks
-  const [assignedTasks, setAssignedTasks] = useState<any[]>([]); // Store tasks assigned to the user
-  const [isModalOpen, setIsModalOpen] = useState(false); // Modal visibility for create
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false); // Modal visibility for edit
-  const [selectedTask, setSelectedTask] = useState<any | null>(null); // Selected task for editing
-  const [showAllTasks, setShowAllTasks] = useState(true); // Toggle between all tasks and assigned tasks
-  const [userId, setUserId] = useState<number | null>(null); // Store the current user ID
+  const { team_id } = useParams<{ team_id: string }>();
+  const [teamName, setTeamName] = useState('');
+  const [teamOwner, setTeamOwner] = useState<number | null>(null); // Store team owner ID
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [filteredTasks, setFilteredTasks] = useState<any[]>([]);
+  const [assignedTasks, setAssignedTasks] = useState<any[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<any | null>(null);
+  const [showAllTasks, setShowAllTasks] = useState(true);
+  const [userId, setUserId] = useState<number | null>(null);
 
   // Fetch the current user's ID from the token
   useEffect(() => {
@@ -36,16 +36,13 @@ const TeamPage: React.FC = () => {
     }
   }, []);
 
-  interface Task {
-    id: Number;
-    // other properties...
-  }
   // Fetch team details and tasks assigned to the current user
   useEffect(() => {
     async function fetchTeamAndTasks() {
       try {
         const team = await getTeamById(Number(team_id)); // Fetch team by ID
         setTeamName(team.team_name);
+        setTeamOwner(team.owner); // Store team owner ID
 
         // Fetch tasks by team ID
         const fetchedTasks = await getTasksByTeamId(Number(team_id));
@@ -55,9 +52,10 @@ const TeamPage: React.FC = () => {
         // Fetch tasks assigned to the current user
         if (userId !== null) {
           const assignedTaskIds = await getTaskIdsByUserId(userId);
-          // const assignedTasksList = fetchedTasks.filter((task) => assignedTaskIds.includes(task.id));
-          const assignedTasksList = fetchedTasks.filter((task: Task) => assignedTaskIds.includes(task.id));  // Explicitly type 'task'
-          setAssignedTasks(assignedTasksList); // Set tasks assigned to the current user
+          const assignedTasksList = fetchedTasks.filter((task) =>
+            assignedTaskIds.includes(task.id)
+          );
+          setAssignedTasks(assignedTasksList);
         }
       } catch (error) {
         console.error('Failed to fetch team or tasks:', error);
@@ -194,8 +192,8 @@ const TeamPage: React.FC = () => {
               <span style={{ fontSize: '1rem', fontWeight: '500' }}>{task.status}</span>
             </div>
 
-            {/* Edit Task Icon (only show if the user is the creator or assigned to the task) */}
-            {(task.create_by === userId || assignedTasks.some((assignedTask) => assignedTask.id === task.id)) && (
+            {/* Edit Task Icon (only show if the user is the owner or assigned to the task) */}
+            {(teamOwner === userId || assignedTasks.some((assignedTask) => assignedTask.id === task.id)) && (
               <SettingsIcon
                 onClick={() => handleEditTaskClick(task)} // Open the edit modal for the task
                 style={{
@@ -209,7 +207,7 @@ const TeamPage: React.FC = () => {
             )}
 
             {/* Delete Task Icon */}
-            {(task.create_by === userId || assignedTasks.some((assignedTask) => assignedTask.id === task.id)) && (
+            {(teamOwner === userId || assignedTasks.some((assignedTask) => assignedTask.id === task.id)) && (
               <DeleteForeverIcon
                 onClick={() => handleDeleteTask(task.id)} // Handle delete task
                 style={{

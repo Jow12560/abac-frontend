@@ -6,7 +6,7 @@ import { createTaskByUser, deleteTasksByTaskId } from '../../service/taskByUser.
 interface Task {
   id: number;
   title: string;
-  description: string;
+  task_description: string; // Changed to task_description
   due_date: string;
   status: string;  // Include status in Task interface
   assigned_users: number[];
@@ -20,7 +20,7 @@ interface EditTaskModalProps {
 
 const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, onClose, teamId }) => {
   const [title, setTitle] = useState(task?.title || '');
-  const [taskDescription, setTaskDescription] = useState(task?.description || '');
+  const [taskDescription, setTaskDescription] = useState(task?.task_description || ''); // Changed to task_description
   const [dueDate, setDueDate] = useState(task?.due_date || ''); // Due date field
   const [status, setStatus] = useState(task?.status || 'รอเริ่ม'); // Default to "รอเริ่ม" (Pending Start)
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,7 +44,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, onClose, teamId }) 
   useEffect(() => {
     if (task) {
       setTitle(task.title);
-      setTaskDescription(task.description);
+      setTaskDescription(task.task_description); // Changed to task_description
       setDueDate(task.due_date);
       setAssignedUsers(task.assigned_users || []);
       setStatus(task.status); // Set the task's status
@@ -59,11 +59,13 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, onClose, teamId }) 
       // Update the task details, including status
       await updateTask(task.id, {
         title,
-        description: taskDescription,
+        task_description: taskDescription, // Changed to task_description
         due_date: dueDate,
         status, // Include status in the payload
       });
 
+      // Check if there are any selected assigned users
+    if (assignedUsers.length > 0) {
       // Delete all previous task_by_user records for the task
       await deleteTasksByTaskId(task.id);
 
@@ -74,6 +76,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, onClose, teamId }) 
           user_id: userId,
         });
       }
+    }
 
       onClose(); // Close the modal after updating the task
       window.location.reload(); // Refresh the data after completing the update

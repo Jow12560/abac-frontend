@@ -57,7 +57,7 @@ export async function createTask({
 }
 
 // Update task by ID
-export async function updateTask(taskId: number, updateData: { title?: string; description?: string; due_date?: string; status?: string }) {
+export async function updateTask(taskId: number, updateData: { title?: string; task_description?: string; due_date?: string; status?: string }) {
   try {
     const response = await authAxiosClient.patch(`/task/${taskId}`, updateData);
     return response.data;
