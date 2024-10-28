@@ -14,13 +14,23 @@ import Swal from 'sweetalert2';
 import TaskFilter from './task_filter';
 import { deleteTask } from '../../service/task.service';
 
+
+interface Task {
+  id: number;
+  title: string;
+  task_description: string;
+  due_date: string;
+  status: string;
+  create_by: number;
+}
+
 const TeamPage: React.FC = () => {
   const { team_id } = useParams<{ team_id: string }>();
   const [teamName, setTeamName] = useState('');
   const [teamOwner, setTeamOwner] = useState<number | null>(null); // Store team owner ID
-  const [tasks, setTasks] = useState<any[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [filteredTasks, setFilteredTasks] = useState<any[]>([]);
-  const [assignedTasks, setAssignedTasks] = useState<any[]>([]);
+  const [assignedTasks, setAssignedTasks] = useState<Task[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any | null>(null);
@@ -45,14 +55,14 @@ const TeamPage: React.FC = () => {
         setTeamOwner(team.owner); // Store team owner ID
 
         // Fetch tasks by team ID
-        const fetchedTasks = await getTasksByTeamId(Number(team_id));
+        const fetchedTasks: Task[] = await getTasksByTeamId(Number(team_id));
         setTasks(fetchedTasks); // Set fetched tasks in state
         setFilteredTasks(fetchedTasks); // Set filtered tasks initially
 
         // Fetch tasks assigned to the current user
         if (userId !== null) {
           const assignedTaskIds = await getTaskIdsByUserId(userId);
-          const assignedTasksList = fetchedTasks.filter((task) =>
+          const assignedTasksList = fetchedTasks.filter((task: Task) =>
             assignedTaskIds.includes(task.id)
           );
           setAssignedTasks(assignedTasksList);
